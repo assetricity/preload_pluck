@@ -1,6 +1,7 @@
 # Preload Pluck
 
 [![Build Status](https://travis-ci.org/assetricity/preload_pluck.png)](https://travis-ci.org/assetricity/preload_pluck)
+[![Coverage Status](https://coveralls.io/repos/assetricity/preload_pluck/badge.png?branch=master)](https://coveralls.io/r/assetricity/preload_pluck?branch=master)
 [![Dependency Status](https://gemnasium.com/assetricity/preload_pluck.png)](https://gemnasium.com/assetricity/preload_pluck)
 
 Adds a `preload_pluck` method to ActiveRecord that allows querying using Rails 4 eager loading-style for joined tables (`preload`), and returns a 2-dimensional array without ActiveRecord model creation overhead (`pluck`).
