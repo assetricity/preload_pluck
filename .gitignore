@@ -1,5 +1,4 @@
 *.gem
-*.sqlite3
 .bundle
 .ruby-version
 Gemfile.lock

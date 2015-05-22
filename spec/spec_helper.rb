@@ -8,8 +8,7 @@ if ENV['COVERAGE'] == 'on'
   Coveralls.wear!
 end
 
-ActiveRecord::Base.establish_connection(adapter: 'sqlite3',
-                                        database: File.dirname(__FILE__) + '/../tmp/preload_pluck.sqlite3')
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
 load File.dirname(__FILE__) + '/support/data/schema.rb'
 load File.dirname(__FILE__) + '/support/data/models.rb'
