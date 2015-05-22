@@ -44,38 +44,38 @@ describe PreloadPluck do
   end
 
   context 'immediate and nested fields' do
-    let(:preload_pluck) { [:text, :created_at,
-                           'user.name', 'user.created_at',
-                           'post.text', 'post.created_at',
-                           'post.user.name', 'post.user.created_at',
-                           'post.category.name', 'post.category.created_at',
-                           'post.user.company.name', 'post.user.company.created_at'] }
+    let(:preload_pluck) { [:title, :text,
+                           'user.name', 'user.email',
+                           'post.title', 'post.text',
+                           'post.user.name', 'post.user.email',
+                           'post.category.name', 'post.category.description',
+                           'post.user.company.name', 'post.user.company.description'] }
     it do
       expect { results }.to_not exceed_query_limit(6)
-      expect(results[0][0]).to eq comment1.text
-      expect(results[0][1]).to eq comment1.created_at
+      expect(results[0][0]).to eq comment1.title
+      expect(results[0][1]).to eq comment1.text
       expect(results[0][2]).to eq comment1.user.name
-      expect(results[0][3]).to eq comment1.user.created_at
-      expect(results[0][4]).to eq comment1.post.text
-      expect(results[0][5]).to eq comment1.post.created_at
+      expect(results[0][3]).to eq comment1.user.email
+      expect(results[0][4]).to eq comment1.post.title
+      expect(results[0][5]).to eq comment1.post.text
       expect(results[0][6]).to eq comment1.post.user.name
-      expect(results[0][7]).to eq comment1.post.user.created_at
+      expect(results[0][7]).to eq comment1.post.user.email
       expect(results[0][8]).to eq comment1.post.category.name
-      expect(results[0][9]).to eq comment1.post.category.created_at
+      expect(results[0][9]).to eq comment1.post.category.description
       expect(results[0][10]).to eq comment1.post.user.company.name
-      expect(results[0][11]).to eq comment1.post.user.company.created_at
-      expect(results[1][0]).to eq comment2.text
-      expect(results[1][1]).to eq comment2.created_at
+      expect(results[0][11]).to eq comment1.post.user.company.description
+      expect(results[1][0]).to eq comment2.title
+      expect(results[1][1]).to eq comment2.text
       expect(results[1][2]).to eq comment2.user.name
-      expect(results[1][3]).to eq comment2.user.created_at
-      expect(results[1][4]).to eq comment2.post.text
-      expect(results[1][5]).to eq comment2.post.created_at
+      expect(results[1][3]).to eq comment2.user.email
+      expect(results[1][4]).to eq comment2.post.title
+      expect(results[1][5]).to eq comment2.post.text
       expect(results[1][6]).to eq comment2.post.user.name
-      expect(results[1][7]).to eq comment2.post.user.created_at
+      expect(results[1][7]).to eq comment2.post.user.email
       expect(results[1][8]).to eq comment2.post.category.name
-      expect(results[1][9]).to eq comment2.post.category.created_at
+      expect(results[1][9]).to eq comment2.post.category.description
       expect(results[1][10]).to eq comment2.post.user.company.name
-      expect(results[1][11]).to eq comment2.post.user.company.created_at
+      expect(results[1][11]).to eq comment2.post.user.company.description
     end
   end
 
@@ -137,20 +137,20 @@ describe PreloadPluck do
 
         bm.report(:pluck) { Comment.includes(:user, post: [:category, user: :company])
                                    .order(:created_at).limit(1000)
-                                   .pluck(:text, :created_at,
-                                          'users.name', 'users.created_at',
-                                          'posts.text', 'posts.created_at',
-                                          'users_posts.name', 'users_posts.created_at',
-                                          'categories.name', 'categories.created_at',
-                                          'companies.name', 'companies.created_at') }
+                                   .pluck(:title, :text,
+                                          'users.name', 'users.email',
+                                          'posts.title', 'posts.text',
+                                          'users_posts.name', 'users_posts.email',
+                                          'categories.name', 'categories.description',
+                                          'companies.name', 'companies.description') }
 
         bm.report(:preload_pluck) { Comment.order(:created_at).limit(1000)
-                                           .preload_pluck(:text, :created_at,
-                                                          'user.name', 'user.created_at',
-                                                          'post.text', 'post.created_at',
-                                                          'post.user.name', 'post.user.created_at',
-                                                          'post.category.name', 'post.category.created_at',
-                                                          'post.user.company.name', 'post.user.company.created_at') }
+                                           .preload_pluck(:title, :text,
+                                                          'user.name', 'user.email',
+                                                          'post.title', 'post.text',
+                                                          'post.user.name', 'post.user.email',
+                                                          'post.category.name', 'post.category.description',
+                                                          'post.user.company.name', 'post.user.company.description') }
       end
     end
   end
