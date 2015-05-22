@@ -96,7 +96,8 @@ module PreloadPluck
             else
               col = field.path.last
             end
-            val = joined_data[current_path][val][col]
+            val = joined_data[current_path][val]
+            val = val[col] if val
           end
           val
         else
