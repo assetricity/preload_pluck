@@ -43,10 +43,10 @@ module PreloadPluck
       # Pluck returns a flat array if only one value, so use a consistent structure if there is one or multiple fields
       data.map! {|val| [val]}
     end
-    data = __preload_pluck_to_attrs(data, plucked_cols)
+    data_headers = __preload_pluck_to_header_lookup(plucked_cols)
 
     # A cache of records that we populate then join to later based on foreign keys
-    joined_data = {}
+    nested_data = {}
 
     # Incrementally process nested fields by level
     max_level = fields.map {|f| f.path.length - 1}.max
@@ -60,12 +60,14 @@ module PreloadPluck
 
         # List of ids that are related to the previous objects (the IN clause in SQL preload statement)
         if level == 0 # Level 0 is different as data is stored in a different structure
+          index = data_headers[assoc.foreign_key]
           collection = data
         else
           prev_path = group.first.path_upto(level - 1)
-          collection = joined_data[prev_path].values
+          index = nested_data[prev_path][:header][assoc.foreign_key]
+          collection = nested_data[prev_path][:data].values
         end
-        ids = collection.map {|a| a[assoc.foreign_key]}.uniq
+        ids = collection.map {|d| d[index]}.uniq
 
         # Select id and other fields at the next level
         cols = group.map do |f|
@@ -75,12 +77,14 @@ module PreloadPluck
             f.path[level + 1]
           end
         end.uniq
-        joined_plucked_cols = [klass.primary_key, *cols]
-        joined = klass.where(klass.primary_key => ids).pluck(*joined_plucked_cols)
-        attrs = __preload_pluck_to_attrs(joined, joined_plucked_cols)
-
-        # Index to quickly search on id
-        joined_data[current_path] = attrs.index_by {|a| a[klass.primary_key]}
+        plucked_cols = [klass.primary_key, *cols]
+        indexed_data = klass.where(klass.primary_key => ids)
+                            .pluck(*plucked_cols)
+                            .index_by {|d| d[0]} # Index to quickly search on id
+        nested_data[current_path] = {
+          header: __preload_pluck_to_header_lookup(plucked_cols),
+          data: indexed_data
+        }
       end
     end
 
@@ -88,7 +92,7 @@ module PreloadPluck
       fields.map do |field|
         if field.nested?(0)
           assoc = field.assoc(0)
-          val = attr[assoc.foreign_key]
+          val = attr[data_headers[assoc.foreign_key]]
           (field.path.length - 1).times do |level|
             current_path = field.path_upto(level)
             if field.nested?(level + 1)
@@ -96,22 +100,23 @@ module PreloadPluck
             else
               col = field.path.last
             end
-            val = joined_data[current_path][val]
-            val = val[col] if val
+            current_data = nested_data[current_path]
+            current_row = current_data[:data][val]
+            if current_row
+              index = current_data[:header][col]
+              val = current_row[index]
+            end
           end
           val
         else
-          attr[field.path.last]
+          attr[data_headers[field.path.last]]
         end
       end
     end
   end
 
-  def __preload_pluck_to_attrs(array, column_names)
-    array.map do |item|
-      pairs = item.map.with_index {|element, index| [column_names[index], element]}.flatten
-      Hash[*pairs]
-    end
+  def __preload_pluck_to_header_lookup(array)
+    Hash[array.map.with_index {|x, i| [x, i]}]
   end
 end
 
