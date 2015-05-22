@@ -28,6 +28,30 @@ module PreloadPluck
     end
   end
 
+  # Return a 2-dimensional array of values where columns correspond to supplied arguments. Data from associations is
+  # eager loaded.
+  #
+  # Attributes on the current model can be supplied by name:
+  #
+  #    Comment.preload_pluck(:title, :text)
+  #
+  # Nested attributes should be separated by a period:
+  #
+  #    Comment.preload_pluck('post.title', 'post.text')
+  #
+  # Both immediate and nested attributes can be mixed:
+  #
+  #    Comment.preload_pluck(:title, :text, 'post.title', 'post.text')
+  #
+  # Any SQL conditions should be set before `preload_pluck` is called:
+  #
+  #    Comment.order(:created_at)
+  #           .joins(:user)
+  #           .where(user: {name: 'Alice'))
+  #           .preload_pluck(:title, :text, 'post.title', 'post.text')
+  #
+  # @param args [Array<Symbol or String>] list of immediate and/or nested model attributes.
+  # @return [Array<Array>] 2-dimensional array where columns correspond to supplied arguments.
   def preload_pluck(*args)
     fields = args.map {|arg| Field.new(self, arg.to_s.split('.'))}
 
