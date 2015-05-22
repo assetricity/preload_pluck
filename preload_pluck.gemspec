@@ -16,9 +16,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'activerecord', '>= 3.2.1'
 
   spec.add_development_dependency 'activerecord-import', '~> 0.7.0'
+  spec.add_development_dependency 'database_cleaner', '~> 1.4.0'
   spec.add_development_dependency 'factory_girl', '~> 4.5.0'
   spec.add_development_dependency 'rake', '~> 10.4.0'
   spec.add_development_dependency 'rspec', '~> 3.2.0'
   spec.add_development_dependency 'sqlite3', '~> 1.3.10'
-  spec.add_development_dependency 'database_cleaner', '~> 1.4.0'
 end
