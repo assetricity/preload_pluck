@@ -101,7 +101,8 @@ module PreloadPluck
             f.path[level + 1]
           end
         end.uniq
-        plucked_cols = [klass.primary_key, *cols]
+        # If id is specified by user, we need to make this list unique
+        plucked_cols = [klass.primary_key, *cols].uniq
         indexed_data = klass.where(klass.primary_key => ids)
                             .pluck(*plucked_cols)
                             .index_by {|d| d[0]} # Index to quickly search on id

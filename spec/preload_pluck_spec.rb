@@ -79,6 +79,18 @@ describe PreloadPluck do
     end
   end
 
+  context 'immediate and nested ids' do
+    let(:preload_pluck) { [:id, 'post.id', 'post.user.id'] }
+    it do
+      expect(results[0][0]).to eq comment1.id
+      expect(results[0][1]).to eq comment1.post.id
+      expect(results[0][2]).to eq comment1.post.user.id
+      expect(results[1][0]).to eq comment2.id
+      expect(results[1][1]).to eq comment2.post.id
+      expect(results[1][2]).to eq comment2.post.user.id
+    end
+  end
+
   context 'immediate null value in path' do
     before { comment2.update(post: nil) }
     let(:preload_pluck) { 'post.text' }
