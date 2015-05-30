@@ -31,5 +31,10 @@ ActiveRecord::Schema.define do
     t.string :text
     t.timestamps null: false
   end
-end
 
+  add_foreign_key :users, :company
+  add_foreign_key :posts, :user
+  add_foreign_key :posts, :category
+  add_foreign_key :comments, :user
+  add_foreign_key :comments, :post
+end
