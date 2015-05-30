@@ -59,15 +59,10 @@ module PreloadPluck
       if field.nested?(0)
         field.assoc(0).foreign_key
       else
-        field.path.last
+        field.path[0]
       end
     end.uniq
-    data = pluck(*plucked_cols)
-    if fields.length == 1
-      # Pluck returns a flat array if only one value, so use a consistent structure if there is one or multiple fields
-      data.map! {|val| [val]}
-    end
-    data_headers = __preload_pluck_to_header_lookup(plucked_cols)
+    data = connection.execute(select(plucked_cols).to_sql)
 
     # A cache of records that we populate then join to later based on foreign keys
     nested_data = {}
@@ -84,14 +79,12 @@ module PreloadPluck
 
         # List of ids that are related to the previous objects (the IN clause in SQL preload statement)
         if level == 0 # Level 0 is different as data is stored in a different structure
-          index = data_headers[assoc.foreign_key]
           collection = data
         else
           prev_path = group.first.path_upto(level - 1)
-          index = nested_data[prev_path][:header][assoc.foreign_key]
-          collection = nested_data[prev_path][:data].values
+          collection = nested_data[prev_path].values
         end
-        ids = collection.map {|d| d[index]}.uniq
+        ids = collection.map {|d| d[assoc.foreign_key]}.uniq
 
         # Select id and other fields at the next level
         cols = group.map do |f|
@@ -103,13 +96,10 @@ module PreloadPluck
         end.uniq
         # If id is specified by user, we need to make this list unique
         plucked_cols = [klass.primary_key, *cols].uniq
-        indexed_data = klass.where(klass.primary_key => ids)
-                            .pluck(*plucked_cols)
-                            .index_by {|d| d[0]} # Index to quickly search on id
-        nested_data[current_path] = {
-          header: __preload_pluck_to_header_lookup(plucked_cols),
-          data: indexed_data
-        }
+        sql = klass.where(klass.primary_key => ids).select(plucked_cols).to_sql
+        indexed_data = klass.connection.execute(sql)
+                            .index_by {|d| d[klass.primary_key]} # Index to quickly search by id
+        nested_data[current_path] = indexed_data
       end
     end
 
@@ -117,7 +107,7 @@ module PreloadPluck
       fields.map do |field|
         if field.nested?(0)
           assoc = field.assoc(0)
-          val = attr[data_headers[assoc.foreign_key]]
+          val = attr[assoc.foreign_key]
           (field.path.length - 1).times do |level|
             current_path = field.path_upto(level)
             if field.nested?(level + 1)
@@ -126,22 +116,15 @@ module PreloadPluck
               col = field.path.last
             end
             current_data = nested_data[current_path]
-            current_row = current_data[:data][val]
-            if current_row
-              index = current_data[:header][col]
-              val = current_row[index]
-            end
+            current_row = current_data[val]
+            val = current_row[col] if current_row
           end
           val
         else
-          attr[data_headers[field.path.last]]
+          attr[field.path[0]]
         end
       end
     end
-  end
-
-  def __preload_pluck_to_header_lookup(array)
-    Hash[array.map.with_index {|x, i| [x, i]}]
   end
 end
 
